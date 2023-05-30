@@ -7,6 +7,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 import java.util.Scanner;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -23,12 +24,19 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import proyectomundial.DAO.SeleccionDAO;
+import proyectomundial.DAO.UsuarioDAO;
 import proyectomundial.model.Seleccion;
+import proyectomundial.model.Usuario;
 
 public class GUIManual extends JFrame {
 
     SeleccionDAO seleccionDAO = new SeleccionDAO();
+    UsuarioDAO usuarioDAO = new UsuarioDAO();
     
+    List<Usuario> usuarios = usuarioDAO.getUsuarios();
+    
+    // Captura el usuario con el que se inicie sesion
+    String sesionActual = null;
     
     // Matrix que permite almancenar la información de las selecciones futbol cargadas
     public String[][] selecciones = null;
@@ -44,6 +52,9 @@ public class GUIManual extends JFrame {
     
     // Elementos de opciones de Menú
     private JPanel jPanelMenu;
+    
+    private JPanel JPanelSesion;
+    private JLabel btnSesion;
     
     private JPanel jPanelMenuHome;
     private JLabel btnHome;
@@ -100,6 +111,9 @@ public class GUIManual extends JFrame {
         jPanelMenuHome = new JPanel();
         btnHome = new JLabel();
         
+        JPanelSesion = new JPanel();
+        btnSesion = new JLabel();
+        
         jPanelMenuSelecciones = new JPanel();
         btnSelecciones = new JLabel();
         
@@ -117,6 +131,9 @@ public class GUIManual extends JFrame {
         
         // Pinta la opción de menú del Home
         pintarMenuHome();
+        
+        // Pintar la opción de menú de Sesion
+        pintarSesion();
         
         // Pinta la opción de Menú de las Selecciones
         pintarMenuSelecciones();
@@ -208,6 +225,127 @@ public class GUIManual extends JFrame {
         jPanelMain.add(homePanel, BorderLayout.CENTER);
         jPanelMain.repaint();
         jPanelMain.revalidate();
+    }
+    
+    /**
+     * Función que se encarga de ajustar los elementos gráficos que componente la opción de navegación del Sesion
+     * Define estilos, etiquetas, iconos que decoran la opción del Menú. 
+     * Esta opción de Menu permite mostrar la página de bienvenida de la aplicación
+     */
+    private void pintarSesion() {
+        btnSesion.setIcon(new ImageIcon(getClass().getResource("/resources/icons/home.png")));
+        btnSesion.setText("Sesión");
+        btnSesion.setForeground(new java.awt.Color(255, 255, 255));
+        
+        JLabel vacioSesion = new JLabel();
+        JPanelSesion.setBackground(new java.awt.Color(17, 41, 63));
+        JPanelSesion.setPreferredSize((new java.awt.Dimension(220, 35)));
+        JPanelSesion.setLayout(new BorderLayout(15, 0));
+        JPanelSesion.add(vacioSesion, BorderLayout.WEST);
+        JPanelSesion.add(btnSesion, BorderLayout.CENTER);
+        jPanelMenu.add(JPanelSesion);
+        
+        btnSesion.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                System.out.println("Sesión");
+                accionSesion();
+            }
+        });
+    }
+    
+    /**
+     * Función que se ejecuta cuando el usuario hacer click sobre la opción de navegación Sesion
+     * Permite modificar la etiqueta de Navegación en Home, remover los elementos que hay en 
+     * el panel de contenidos y agregar el inicio de sesion
+     */
+    private void accionSesion() {
+        jLabelTop.setText("Sesión");
+        if (sesionActual==null) {
+            
+            JPanel form = new JPanel();
+            form.setLayout(new GridLayout(10, 1, 0, 0));
+
+            JPanel panelUsuario = new JPanel();
+            panelUsuario.setLayout(new GridLayout(1, 2, 5, 0));
+            
+            JLabel labelUsuario = new JLabel();
+            labelUsuario.setText("Ingrese usuario");
+            panelUsuario.add(labelUsuario);
+
+            JTextField fieldUsuario = new JTextField();
+            panelUsuario.add(fieldUsuario);
+            
+            form.add(panelUsuario);
+            
+            JPanel panelContraseña = new JPanel();
+            panelContraseña.setLayout(new GridLayout(1, 2, 5, 0));
+            
+            JLabel labelContraseña = new JLabel();
+            labelContraseña.setText("Ingrese contraseña");
+            panelContraseña.add(labelContraseña);
+            
+            JTextField fieldContraseña = new JTextField();
+            panelContraseña.add(fieldContraseña);
+            
+            form.add(panelContraseña);
+            
+            JButton iniciar = new JButton();
+            iniciar.setText("Iniciar Sesion");
+            iniciar.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent evt) {
+                    for (Usuario usuario : usuarios) {
+                        if (usuario.getUsername().equalsIgnoreCase(fieldUsuario.getText())) {
+                            if (usuario.getPassword().equalsIgnoreCase(fieldContraseña.getText())) {
+                                haySesion = true;
+                                sesionActual = usuario.getUsername();
+                                accionSesion();
+                            } else {
+                                JOptionPane.showMessageDialog(null, "¡Error! La clave ingresada no es correcta.");
+                            }
+                        }
+                    }
+                    if (haySesion == false) {
+                        JOptionPane.showMessageDialog(null, "¡Error! El usuario ingresado no es correcto.");
+                    }
+                }
+            });
+            form.add(iniciar);
+            
+            JPanel sesionPanel = new JPanel();
+            sesionPanel.setLayout(new BoxLayout(sesionPanel, BoxLayout.Y_AXIS));
+            sesionPanel.setPreferredSize((new java.awt.Dimension(620, 410)));
+            sesionPanel.setMaximumSize( jPanelRight.getPreferredSize());
+
+            sesionPanel.add(form);
+
+            jPanelMain.removeAll();
+            jPanelMain.add(sesionPanel, BorderLayout.PAGE_START);
+            jPanelMain.repaint();
+            jPanelMain.revalidate();
+            
+        } else {
+            jPanelMain.removeAll();
+            JPanel sesionPanel = new JPanel();
+
+            JLabel notSelecciones = new JLabel();
+            notSelecciones.setText("¡Hola, "+sesionActual+"! ¿Cómo estás? ¿Deseas cerrar Sesión? ¡Dale al botón! \n\n");
+            sesionPanel.add(notSelecciones);
+
+            JButton cerrarSesion = new JButton();
+            cerrarSesion.setText("Cerrar Sesión");
+            sesionPanel.add(cerrarSesion);
+            cerrarSesion.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent evt) {
+                    sesionActual = null;
+                    haySesion = false;
+                    accionSesion();
+                }
+            });
+
+            jPanelMain.add(sesionPanel);
+            jPanelMain.repaint();
+            jPanelMain.revalidate();
+        }
     }
     
     /**
